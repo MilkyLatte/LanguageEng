@@ -1,4 +1,6 @@
 -- Question 1
+
+
 data Robot = F Int Robot
             |L Robot
             |R Robot
