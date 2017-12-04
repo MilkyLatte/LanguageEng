@@ -3,7 +3,7 @@
 There are 3 monad laws:
 1. Left identity: return a >>= f = f a
 2. Right identity: m >>= return  = m
-3. Associativity: (m >>= f) >>= g = m >>= (\x -> f >>= g)
+3. Associativity: (m >>= f) >>= g = m >>= (\x -> f x >>= g)
 
  data Maybe a = Just a
                | Nothing
@@ -87,6 +87,7 @@ It is incorrect because an instance of a Monad requires kind
 1.3.1
 
 > data Tree a = Leaf a | Fork (Tree a) (Tree a)
+>             deriving Show
 >
 > instance Functor Tree where
 >   fmap f (Leaf x)   = Leaf (f x)
@@ -97,7 +98,7 @@ It is incorrect because an instance of a Monad requires kind
 >   (Leaf x)   <*> (Leaf y)   = Leaf (x y)
 >   (Leaf f)   <*> (Fork x y) = f <$> (Fork x y)
 >   (Fork x y) <*> (Leaf z)   = Fork (x <*> (Leaf z)) (y <*> (Leaf z))
->   (Fork x y) <*> (Fork a b) = Fork (Fork (x <*> a) (y <*> b)) (Fork (y <*> a) (x <*> b))
+>   (Fork x y) <*> (Fork a b) = Fork (Fork (x <*> a) (y <*> a)) (Fork (x <*> b) (y <*> b))
 >
 > instance Monad Tree where
 >   return a = Leaf a
@@ -124,4 +125,56 @@ Fork x y:
   (Fork x y) >>= return = Fork x y
   { def '>>=' }
     Fork (x >>= return) (y >>= return)
-   
+  { Induction Hypothesis }
+    Fork x y
+
+Associativity:
+  (m >>= f) >>= g = m >>= (\x -> f x >>= g)
+Leaf a:
+  (Leaf a >>= f) >>= g
+  { def '>>=' }
+    (f a) >>= g
+  { def '>>=' }
+    g (f a)
+  Right Side:
+  Leaf a >>= (\x -> f x >>= g)
+  { def '>>=' }
+   f a >>= g
+  { def '>>=' }
+   g (f a)
+
+Fork:
+  (Fork a b >>= f) >>= g = Fork a b >>= (\x -> f x >>= g)
+  { def '>>=' }
+    Fork (f a) (f b) >>= g
+  { def '>>=' }
+    Fork ((f a) >>= g) ((f b) >>= g)
+  Right Side:
+    Fork a b >>= (\x -> f x >>= g)
+  { def '>>=' }
+   Fork (f a) (f b) >>= g
+  { def '>>=' }
+   Fork ((f a) >>= g) ((f b) >>= g)
+
+> intToDoubleTree :: Int -> Tree Int
+> intToDoubleTree a = Leaf (2 * a)
+
+> addToTree :: Int -> Int -> Tree Int
+> addToTree a b = Leaf (a + b)
+
+> manipTree :: Tree Int -> Tree Int
+> manipTree (Leaf a)   = Leaf a >>= (\x -> Leaf (((x + 3)*2) + 2))
+> manipTree (Fork a b) =  Fork (manipTree a) (manipTree b)
+
+> dupTree :: a -> Tree a
+> dupTree x = Fork (Leaf x) (Leaf x)
+
+> timesTwoTree :: Tree a -> Tree a
+> timesTwoTree (Leaf x)   = dupTree x
+> timesTwoTree (Fork x y) = Fork (timesTwoTree x) (timesTwoTree y)
+
+> doubleSupp :: Tree a -> Tree a
+> doubleSupp (Fork (Leaf a) (Leaf b)) = Fork (dupTree a) (dupTree b)
+> doubleDoubleTree :: Tree a -> Tree a
+> doubleDoubleTree (Leaf a) = doubleSupp (dupTree a)
+> doubleDoubleTree (Fork x y) = Fork (doubleDoubleTree x) (doubleDoubleTree y)
