@@ -62,3 +62,43 @@ operationMlt x y = State (\s -> (s + y, x * y))
 
 runOp :: Int -> Int -> (Int, Int)
 runOp x y = runState (operationMlt x y) 0
+
+--1.1.1
+type MiniImp = State (Int, Int)
+
+getX :: MiniImp Int
+getX = fst <$> get
+
+getY :: MiniImp Int
+getY = snd  <$> get
+
+setX :: Int -> MiniImp ()
+setX x = do
+        (_, y) <- get
+        put(x, y)
+
+setY :: Int -> MiniImp ()
+setY y = do
+        (x, _) <- get
+        put (x, y)
+
+while :: ((Int,Int) -> Bool) -> ((Int,Int) -> (Int,Int)) -> MiniImp ()
+while p f =
+         do
+            xy <- get
+            if p xy
+            then do
+             put (f xy)
+             while p f
+            else return ()
+firstCnd :: (Int, Int) -> Bool
+firstCnd (x , y) = if y /= 0
+  then True
+  else False
+secondCnd :: (Int, Int )-> (Int, Int)
+secondCnd (x, y) = ((x*y), (y - 1))
+
+fact' :: MiniImp Int
+fact' = do
+  while firstCnd secondCnd
+  getX
