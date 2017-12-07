@@ -142,8 +142,15 @@ triang x = getValue (runState triang'(0,x))
 --1.2
 liftM2 :: Monad m => (a -> b -> c) -> m a -> m b -> m c
 liftM2 f a b = (f <$> a) <*> b
-
+--(>>=) :: Monad m => m a -> (a -> m b) -> m b
 liftM2' :: Monad m => (a -> b -> c) -> m a -> m b -> m c
-liftM2' f a b = do
-  x <- (f <$> a)
-  return (x b)
+liftM2' f a b = a >>= (\x -> f x <$> b)
+
+liftM2'' :: Monad m => (a -> b -> c) -> m a -> m b -> m c
+liftM2'' f a b = a >>= (\x -> b >>= (\y -> return (f x y)))
+
+liftM2''' :: Monad m => (a -> b -> c) -> m a -> m b -> m c
+liftM2''' f a b = do
+  x <- a
+  y <- b
+  return (f x y)
