@@ -91,6 +91,25 @@ while p f =
              put (f xy)
              while p f
             else return ()
+
+-- while p f = get >>= (\xy -> if p xy then put (f xy) >> while p f else return ())
+-- while p f = State (\s -> (s, s)) >>= (\xy -> if p xy then put (f xy) >> while p f else return ())
+-- while p f = State (\s -> (s, s)) >>= (\xy -> if p xy then (State (\_ -> ((f xy),()))) >> while p f else return ())
+-- while p f = State (\s -> (s, s)) >>= (\xy -> if p xy then (State (\_ -> ((f xy),()))) >> while p f else State (\s -> (s, ()))
+-- while p f = State (\s -> let (s', x ) = runState mx s in runState (g x) s')
+--   where mx = State (\s -> (s, s))
+--         g = (\xy -> if p xy then (State (\_ -> ((f xy),()))) >> while p f else State (\s -> (s, ()))
+--
+-- while p f = State (\s -> runState (g s) s)
+--   where g = (\xy -> if p xy then (State (\_ -> ((f xy),()))) >> while p f else State (\s -> (s, ()))
+--
+-- while p f = State (\s -> (if p s then runState mx s else (s, ()))
+--   where mx = (State (\_ -> ((f s),()))) >> while p f)
+
+-- while p f = State (\xy -> (if p xy then runState (while p f) (f xy) else (xy, ())))
+
+
+
 firstCnd :: (Int, Int) -> Bool
 firstCnd (x , y) = if y /= 0
   then True
@@ -102,3 +121,29 @@ fact' :: MiniImp Int
 fact' = do
   while firstCnd secondCnd
   getX
+
+getValue :: ((Int, Int), Int)-> Int
+getValue (_, y) = y
+
+fact :: Int -> Int
+fact x = getValue (runState fact' (1, x))
+
+triangCnd:: (Int, Int) -> (Int, Int)
+triangCnd (x, y) = ((x + y), (y - 1))
+
+triang' :: MiniImp Int
+triang' = do
+  while firstCnd triangCnd
+  getX
+
+triang :: Int -> Int
+triang x = getValue (runState triang'(0,x))
+
+--1.2
+liftM2 :: Monad m => (a -> b -> c) -> m a -> m b -> m c
+liftM2 f a b = (f <$> a) <*> b
+
+liftM2' :: Monad m => (a -> b -> c) -> m a -> m b -> m c
+liftM2' f a b = do
+  x <- (f <$> a)
+  return (x b)
