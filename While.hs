@@ -80,6 +80,8 @@ stm = (:=) <$> var <* tok ":=" <*> aexp
    <|> Begin <$ tok "begin" <*> decl <*> stm <* tok "end"
    <|> tok "(" *> stms <* tok ")"
 
+decl :: Parser Dec
+decl =
 
 chainl p op = p >>= rest where
   rest x = do f <- op
