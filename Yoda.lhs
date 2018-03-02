@@ -1,15 +1,16 @@
-         ██╗   ██╗ ██████╗ ██████╗  █████╗
-         ╚██╗ ██╔╝██╔═══██╗██╔══██╗██╔══██╗
-          ╚████╔╝ ██║   ██║██║  ██║███████║
-           ╚██╔╝  ██║   ██║██║  ██║██╔══██║
-            ██║   ╚██████╔╝██████╔╝██║  ██║
-            ╚═╝    ╚═════╝ ╚═════╝ ╚═╝  ╚═╝
 
-                   Yoda Parsec
+                   ██╗   ██╗ ██████╗ ██████╗  █████╗
+                   ╚██╗ ██╔╝██╔═══██╗██╔══██╗██╔══██╗
+                    ╚████╔╝ ██║   ██║██║  ██║███████║
+                     ╚██╔╝  ██║   ██║██║  ██║██╔══██║
+                      ██║   ╚██████╔╝██████╔╝██║  ██║
+                      ╚═╝    ╚═════╝ ╚═════╝ ╚═╝  ╚═╝
 
-                       by
+                             Yoda Parsec
 
-                   Nicolas Wu
+                                 by
+
+                             Nicolas Wu
 
 
 
@@ -20,11 +21,17 @@ Yoda is a small parser combinator library. It is not efficient, nor
 beautiful, but it hopes to teach young padawans to use the source
 and learn to write a parser.
 
-    <(-,-)> Do, or do not, there is no try.  -- Master Yoda
+    ╔═════════════════════════════════════════════════════════════╗
+    ║                                                             ║
+    ║  <(-,-)>  Do, or do not, there is no try.  -- Master Yoda   ║
+    ║                                                             ║
+    ╚═════════════════════════════════════════════════════════════╝
 
 Yoda is a parser in the Parsec family of libraries, which includes
-Parsec, attoparsec, Megaparsec, and trifecta. Once you have
-mastered it, you can graduate to one of those.
+Parsec, attoparsec, Megaparsec, and trifecta. Once you have mastered
+it, you can graduate to one of those. The main difference is that Yoda
+does not require you to use the `try` function: it automatically tries
+all alternatives for you.
 
 The module exports the following functions and types. Some of these
 functions are defined outside of this file, namely, those marked under
@@ -39,16 +46,18 @@ functions are defined outside of this file, namely, those marked under
 >   , (<$>), (<$)
 >
 >   -- Applicative
->   , pure, (<*>), (<*), (*>)
+>   , pure, (<*>), (<*), (*>), (<**>)
 >
 >   -- Alternative
->   , (<|>), empty, some, many
+>   , (<|>), empty, some, many, asum
 >
 >   -- Monad
 >   , return, (>>=)
 >
->   , item, char, string
+>   -- Miscellaneous
+>   , item, look, eof, char, string
 >   , oneOf, noneOf, sepBy, sepBy1
+>   , (<:>)
 >
 >   , try  -- not needed, but here for historic reasons
 >
@@ -59,6 +68,7 @@ implementing for our parsers.
 
 > import Control.Monad
 > import Control.Applicative
+> import Data.Foldable
 
 
 Parser
@@ -67,23 +77,35 @@ Parser
 Our parsers will take in a `String` and produce a list of possible
 parses, along with remaining unparsed strings.
 
-> newtype Parser a = Parser { parse :: String -> [(String, a)] }
+> newtype Parser a = Parser (String -> [(String, a)])
 
-parse :: Parser a -> (String -> [(String, a)])
-parse (Parser px) = px
+> parse :: Parser a -> (String -> [(String, a)])
+> parse (Parser p) = p
 
 > parseMaybe :: Parser a -> String -> Maybe a
 > parseMaybe px ts = case parse px ts of
->   []            -> Nothing
->   ((ts, x):txs) -> Just x
+>   []             -> Nothing
+>   ((ts', x):txs) -> Just x
 
 This parser tries to push out a character from the incoming stream. It
 fails to parse if there is no remaining input.
 
 > item :: Parser Char
 > item = Parser (\ts -> case ts of
->   []     -> []
->   (t:ts) -> [(ts, t)])
+>   []      -> []
+>   (t:ts') -> [(ts', t)])
+
+Now we implement Luke, I mean, look:
+
+> look :: Parser String
+> look = Parser (\ts -> [(ts, ts)])
+
+It is also useful to know if we have reached the end of the input:
+
+> eof :: Parser ()
+> eof = Parser (\ts -> case ts of
+>   [] -> [(ts, ())]
+>   _  -> [])
 
 At this stage, we can output what has been given to us on the input,
 but we have no way to change the outcome of what we do based on that
@@ -135,6 +157,12 @@ Derived combinators:
 < (*>) :: Applicative f => f a -> f b -> f b
 < px *> py = flip const <$> px <*> py
 <       -- = id <$ px <*> py
+<
+< (<**>) :: Applicative f => f a -> f (a -> b) -> f b
+< px <**> pf = (flip ($)) <$> px <*> pf
+
+
+
 
 Alternative
 ===========
@@ -157,7 +185,10 @@ Derived combinators
 < some px = px <:> many px
 <
 < many :: Alternative f => f a -> f [a]
-< many px = some px <|> empty
+< many px = some px <|> pure []
+
+< asum :: Alternative f => [f a] -> f a
+< asum = foldr (<|>) empty
 
 
 Monad
@@ -175,24 +206,26 @@ influence the output of the parse.
 
 Derived combinators:
 
-> char :: Char -> Parser Char
-> char c = do t <- item
->             if c == t then pure c
->                       else empty
-
 > satisfy :: (Char -> Bool) -> Parser Char
 > satisfy p = item >>= \t -> if p t then pure t else empty
->
->
-> {-
-> -- Or, if you prefer do notation:
->
-> satisfy p = do t <- item
->                if p t then pure t
->                       else empty
->
-> -}
->
+
+Or, if you prefer do notation:
+
+< satisfy p = do t <- item
+<                if p t then pure t
+<                       else empty
+
+
+> char :: Char -> Parser Char
+> char c = satisfy (c ==)
+
+Which, is equivalent to the following:
+
+< char :: Char -> Parser Char
+< char c = do t <- item
+<             if c == t then pure c
+<                       else empty
+
 > oneOf :: [Char] -> Parser Char
 > oneOf = satisfy . flip elem
 >
@@ -204,13 +237,13 @@ Derived combinators:
 > string (c:cs) = char c <:> string cs
 >
 > sepBy  :: Alternative f => f a -> f sep -> f [a]
-> sepBy px psep = sepBy1 px psep <|> empty
+> sepBy px psep = sepBy1 px psep <|> pure []
 >
 > sepBy1 :: Alternative f => f a -> f sep -> f [a]
 > sepBy1 px psep = px <:> (many (psep *> px))
 >
 > (<:>) :: Applicative f => f a -> f [a] -> f [a]
-> x <:> xs = (:) <$> x <*> xs
+> px <:> pxs = (:) <$> px <*> pxs
 
 
 There is a try after all, but it is only here to make this work with
@@ -218,3 +251,26 @@ code written for other members of the Parsec family.
 
 > try :: Parser a -> Parser a
 > try = id
+
+
+Pronunciation    /prəˌnʌnsɪˈeɪʃ(ə)n/
+====================================
+
+Most of the symbols in this file are not easily pronounced, so let's establish
+some nomenclature.
+
+    Symbol   Name
+
+    <$>      fmap
+    <$       const fmap
+
+    <*>      tie fighter, or just "tie", ap
+    <*       left tie,
+    *>       right tie,
+    <**>     tie bomber, pa
+
+    >>=      bind
+
+    <|>      or
+
+    <:>      lift cons
