@@ -1,0 +1,9 @@
+13:48:15 **** Incremental Build of configuration Default for project Queen ****
+xmake CONFIG=Default all 
+Checking build modules
+No build modules used.
+xmake[1]: `bin//Queen.xe' is up to date.
+Build Complete
+
+13:48:15 Build Finished (took 158ms)
+

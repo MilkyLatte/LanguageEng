@@ -1,0 +1,6 @@
+19:42:05 **** Build of configuration Default for project revisionLecture4.xs ****
+xmake CONFIG=Default all 
+xmake: *** No rule to make target `all'.  Stop.
+
+19:42:05 Build Finished (took 113ms)
+

@@ -1,0 +1,9 @@
+13:48:16 **** Incremental Build of configuration Default for project defendergame ****
+xmake CONFIG=Default all 
+Checking build modules
+No build modules used.
+xmake[1]: `bin//defendergame.xe' is up to date.
+Build Complete
+
+13:48:16 Build Finished (took 161ms)
+

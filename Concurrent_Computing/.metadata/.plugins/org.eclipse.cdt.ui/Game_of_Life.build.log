@@ -1,0 +1,15 @@
+13:17:12 **** Build of configuration Default for project Game_of_Life ****
+xmake CONFIG=Default all 
+Checking build modules
+No build modules used.
+Analyzing Game_of_Life.xc
+Propagating analysis
+Creating dependencies for Game_of_Life.xc
+Compiling Game_of_Life.xc
+Creating Game_of_Life.xe
+crt1.S: Error: Undefined reference to 'main'
+xmake[1]: *** [bin//Game_of_Life.xe] Error 1
+xmake: *** [bin//Game_of_Life.xe] Error 2
+
+13:17:13 Build Finished (took 519ms)
+

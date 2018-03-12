@@ -1,0 +1,11 @@
+13:48:15 **** Incremental Build of configuration Default for project Queen_and_Worker_Ants ****
+xmake CONFIG=Default all 
+Checking build modules
+No build modules used.
+Creating Queen_and_Worker_Ants.xe
+crt1.S: Error: Undefined reference to 'main'
+xmake[1]: *** [bin//Queen_and_Worker_Ants.xe] Error 1
+xmake: *** [bin//Queen_and_Worker_Ants.xe] Error 2
+
+13:48:16 Build Finished (took 416ms)
+

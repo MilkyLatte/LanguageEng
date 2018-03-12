@@ -1,0 +1,9 @@
+13:48:17 **** Incremental Build of configuration Default for project revisionLecture4 ****
+xmake CONFIG=Default all 
+Checking build modules
+No build modules used.
+xmake[1]: `bin//revisionLecture4.xe' is up to date.
+Build Complete
+
+13:48:17 Build Finished (took 162ms)
+
