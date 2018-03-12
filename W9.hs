@@ -1,6 +1,5 @@
 data State s a = State (s -> (s, a))
 
-
 runState :: State s a -> s -> (s, a)
 runState (State prog) = prog
 
